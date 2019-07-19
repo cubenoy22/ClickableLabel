@@ -2,7 +2,7 @@
 //  ViewController.swift
 //  ClickableLabelDemo
 //
-//  Created by Nobuyuki Tsutsui on 2016/04/13.
+//  Created by cubenoy22 on 2016/04/13.
 //
 //
 
@@ -15,10 +15,8 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.label?.linkTapHandler = { (link: NSURL) in
-            UIApplication.sharedApplication().openURL(link)
+        self.label?.linkTapHandler = { link in
+            UIApplication.shared.openURL(link)
         }
     }
-
 }
-

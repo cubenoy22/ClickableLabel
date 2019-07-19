@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  ClickableLabelDemo
 //
-//  Created by Nobuyuki Tsutsui on 2016/04/13.
+//  Created by cubenoy22 on 2016/04/13.
 //
 //
 
@@ -13,7 +13,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+    private func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         return true
     }
 }

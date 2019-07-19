@@ -2,7 +2,7 @@
 //  ClickableLabel.h
 //  ClickableLabel
 //
-//  Created by Nobuyuki Tsutsui on 2016/04/13.
+//  Created by cubenoy22 on 2016/04/13.
 //
 //
 

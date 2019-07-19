@@ -2,7 +2,7 @@
 //  Label.swift
 //  ClickableLabel
 //
-//  Created by Nobuyuki Tsutsui on 2016/04/09.
+//  Created by cubenoy22 on 2016/04/09.
 //
 //
 
@@ -11,16 +11,16 @@ import UIKit
 @IBDesignable
 public class Label: UIView {
     
-    private static let HIGHLIGHT_LINK_CORNER_RADIUS: CGFloat = 3.0
-    private static let HIGHLIGHT_LINK_FILL_COLOR = UIColor(white: 0.0, alpha: 0.27)
+    private static let highlightLinkCornerRadius: CGFloat = 3.0
+    private static let highlightLinkFillColor = UIColor(white: 0.0, alpha: 0.27)
     
-    private let layoutManager: NSLayoutManager = NSLayoutManager()
-    private let textContainer: NSTextContainer = NSTextContainer()
+    private let layoutManager = NSLayoutManager()
+    private let textContainer = NSTextContainer()
     private var textStorage: NSTextStorage?
     
-    private let linkHighlightLayer: CAShapeLayer = CAShapeLayer()
-    private var highlightedLink: NSURL?
-    public var linkTapHandler: ((link: NSURL) -> ())?
+    private let linkHighlightLayer = CAShapeLayer()
+    private var highlightedLink: URL?
+    public var linkTapHandler: ((_ link: URL) -> ())?
     
     // MARK: - Initializers
     
@@ -28,14 +28,14 @@ public class Label: UIView {
         super.init(frame: frame)
         self.textContainer.widthTracksTextView = true
         self.layoutManager.addTextContainer(self.textContainer)
-        self.linkHighlightLayer.fillColor = Label.HIGHLIGHT_LINK_FILL_COLOR.CGColor
+        self.linkHighlightLayer.fillColor = Label.highlightLinkFillColor.cgColor
     }
     
     public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.textContainer.widthTracksTextView = true
         self.layoutManager.addTextContainer(self.textContainer)
-        self.linkHighlightLayer.fillColor = Label.HIGHLIGHT_LINK_FILL_COLOR.CGColor
+        self.linkHighlightLayer.fillColor = Label.highlightLinkFillColor.cgColor
     }
     
     // MARK: - IBInspectable Properties
@@ -75,89 +75,91 @@ public class Label: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         if self.textContainer.size.width != self.bounds.width {
-            self.textContainer.size = CGSize(width: self.bounds.width, height: CGFloat.max)
+            self.textContainer.size = CGSize(width: self.bounds.width, height: 0.0)
             self.layoutManager.textContainerChangedGeometry(self.textContainer)
             self.invalidateIntrinsicContentSize()
         }
     }
     
-    public override func intrinsicContentSize() -> CGSize {
-        self.layoutManager.ensureLayoutForTextContainer(self.textContainer)
-        let glyphRange = self.layoutManager.glyphRangeForTextContainer(self.textContainer)
-        let boundingRect = self.layoutManager.boundingRectForGlyphRange(glyphRange, inTextContainer: self.textContainer)
-        return CGSize(width: boundingRect.width, height: floor(boundingRect.height))
+    public override var intrinsicContentSize: CGSize {
+        get {
+            self.layoutManager.ensureLayout(for: self.textContainer)
+            let glyphRange = self.layoutManager.glyphRange(for: self.textContainer)
+            let boundingRect = self.layoutManager.boundingRect(forGlyphRange: glyphRange, in: self.textContainer)
+            return CGSize(width: boundingRect.width, height: floor(boundingRect.height))
+        }
     }
 
-    public override func drawRect(rect: CGRect) {
-        let glyphRange = self.layoutManager.glyphRangeForTextContainer(self.textContainer)
-        self.layoutManager.drawGlyphsForGlyphRange(glyphRange, atPoint: CGPointZero)
+    public override func draw(_ rect: CGRect) {
+        let glyphRange = self.layoutManager.glyphRange(for: self.textContainer)
+        self.layoutManager.drawGlyphs(forGlyphRange: glyphRange, at: .zero)
     }
     
-    public override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let textStorage = self.textStorage else {
             return
         }
-        let glyphIndex = self.layoutManager.glyphIndexForPoint(touches.first!.locationInView(self), inTextContainer: self.textContainer)
+        let glyphIndex = self.layoutManager.glyphIndex(for: touches.first!.location(in: self), in: self.textContainer)
         var effectiveRange: NSRange = NSMakeRange(NSNotFound, 0)
-        let attributes = textStorage.attributesAtIndex(glyphIndex, effectiveRange: &effectiveRange)
-        let linkAttribute = attributes[NSLinkAttributeName]
-        if linkAttribute is NSURL {
-            self.highlightedLink = linkAttribute as? NSURL
-        } else if linkAttribute is NSString {
-            self.highlightedLink = NSURL(string: linkAttribute as! String)
+        let attributes = textStorage.attributes(at: glyphIndex, effectiveRange: &effectiveRange)
+        let linkAttribute = attributes[NSAttributedString.Key.link]
+        if let linkAttribute = linkAttribute as? URL {
+            self.highlightedLink = linkAttribute
+        } else if let linkAttribute = linkAttribute as? String {
+            self.highlightedLink = URL(string: linkAttribute)
         } else {
             return
         }
-        let linkGlyphRange = self.layoutManager.glyphRangeForCharacterRange(effectiveRange, actualCharacterRange: nil)
+        let linkGlyphRange = self.layoutManager.glyphRange(forCharacterRange: effectiveRange, actualCharacterRange: nil)
         let path = UIBezierPath()
-        self.layoutManager.enumerateEnclosingRectsForGlyphRange(linkGlyphRange,
-                                                                withinSelectedGlyphRange: NSMakeRange(NSNotFound, 0),
-                                                                inTextContainer: self.textContainer)
+        self.layoutManager.enumerateEnclosingRects(forGlyphRange: linkGlyphRange,
+                                                   withinSelectedGlyphRange: NSMakeRange(NSNotFound, 0),
+                                                   in: self.textContainer)
         { (rect, stop) in
             var rect = rect
-            rect.size.height += Label.HIGHLIGHT_LINK_CORNER_RADIUS
-            path.appendPath(UIBezierPath(roundedRect: rect, cornerRadius: Label.HIGHLIGHT_LINK_CORNER_RADIUS))
+            rect.size.height += Label.highlightLinkCornerRadius
+            path.append(UIBezierPath(roundedRect: rect, cornerRadius: Label.highlightLinkCornerRadius))
         }
         let bounds = path.bounds
-        path.applyTransform(CGAffineTransformMakeTranslation(-bounds.origin.x, -bounds.origin.y))
-        self.linkHighlightLayer.path = path.CGPath
-        showLinkHighlight(bounds)
+        path.apply(CGAffineTransform(translationX: -bounds.origin.x, y: -bounds.origin.y))
+        self.linkHighlightLayer.path = path.cgPath
+        showLinkHighlight(boundingRect: bounds)
     }
     
-    public override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         if self.highlightedLink != nil {
             guard let touch = touches.first else {
                 return
             }
-            let pt = self.linkHighlightLayer.convertPoint(touch.locationInView(self), fromLayer: self.layer)
-            if CGPathContainsPoint(self.linkHighlightLayer.path, nil, pt, false) {
-                if self.linkHighlightLayer.hidden {
+            let pt = self.linkHighlightLayer.convert(touch.location(in: self), from: self.layer)
+            if self.linkHighlightLayer.path?.contains(pt) ?? false {
+                if self.linkHighlightLayer.isHidden {
                     CATransaction.begin()
                     CATransaction.setDisableActions(true)
-                    self.linkHighlightLayer.hidden = false
+                    self.linkHighlightLayer.isHidden = false
                     CATransaction.commit()
                 }
             } else {
-                if !self.linkHighlightLayer.hidden {
+                if !self.linkHighlightLayer.isHidden {
                     CATransaction.begin()
                     CATransaction.setDisableActions(true)
-                    self.linkHighlightLayer.hidden = true
+                    self.linkHighlightLayer.isHidden = true
                     CATransaction.commit()
                 }
             }
         }
     }
     
-    public override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let link = self.highlightedLink {
-            if !self.linkHighlightLayer.hidden {
-                linkTapHandler?(link: link)
+            if !self.linkHighlightLayer.isHidden {
+                linkTapHandler?(link)
             }
             resetLinkHighlight()
         }
     }
     
-    public override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+    public override func touchesCancelled(_ touches: Set<UITouch>?, with event: UIEvent?) {
         resetLinkHighlight()
     }
     
@@ -167,7 +169,7 @@ public class Label: UIView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         self.linkHighlightLayer.frame = boundingRect
-        self.linkHighlightLayer.hidden = false
+        self.linkHighlightLayer.isHidden = false
         self.layer.addSublayer(self.linkHighlightLayer)
         CATransaction.commit()
     }

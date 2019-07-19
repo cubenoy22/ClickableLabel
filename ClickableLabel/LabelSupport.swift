@@ -2,7 +2,7 @@
 //  LabelSupport.swift
 //  ClickableLabel
 //
-//  Created by Nobuyuki Tsutsui on 2016/04/13.
+//  Created by cubenoy22 on 2016/04/13.
 //
 //
 
@@ -15,11 +15,13 @@ extension Label {
             return nil
         }
         set {
-            if let data = newValue?.dataUsingEncoding(NSUnicodeStringEncoding) {
+            if let data = newValue?.data(using: String.Encoding.unicode.rawValue) {
                 do {
-                    self.attributedText = try NSTextStorage(data: data,
-                                                            options: [NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType],
-                                                            documentAttributes: nil)
+                    self.attributedText = try NSTextStorage.init(
+                        data: data,
+                        options: [.documentType: NSAttributedString.DocumentType.html],
+                        documentAttributes: nil
+                    )
                 }
                 catch {
                     return
