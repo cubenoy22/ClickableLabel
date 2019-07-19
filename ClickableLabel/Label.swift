@@ -86,7 +86,7 @@ public class Label: UIView {
             self.layoutManager.ensureLayout(for: self.textContainer)
             let glyphRange = self.layoutManager.glyphRange(for: self.textContainer)
             let boundingRect = self.layoutManager.boundingRect(forGlyphRange: glyphRange, in: self.textContainer)
-            return CGSize(width: boundingRect.width, height: floor(boundingRect.height))
+            return CGSize(width: UIView.noIntrinsicMetric, height: floor(boundingRect.height))
         }
     }
 
